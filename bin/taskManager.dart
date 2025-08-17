@@ -107,9 +107,27 @@ class TaskManager{
       print("No tasks available");
     }
   }
+
+  Future<void> editTask(int num, String description) async{
+    await createFileIfNotExists();
+    var contents = await file.readAsString();
+    if (contents.trim().isNotEmpty){
+      tasks = contents.split('\n')
+          .where((line) => line.trim().isNotEmpty)
+          .map((line) => Task(line))
+          .toList();
+      edit(num, description);
+      await file.writeAsString("");
+      for (final task in tasks){
+        await file.writeAsString("$task\n", mode: FileMode.append);
+      }
+    }else{
+      print("No tasks available");
+    }
+  }
 }
 
 void main(){
   var manager = TaskManager();
-  manager.loadFromFile();
+  manager.addToFile("Do Something Again");
 }
