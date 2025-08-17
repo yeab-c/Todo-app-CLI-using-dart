@@ -1,22 +1,37 @@
+import 'dart:io';
 import 'task.dart';
 
 class TaskManager{
   List<Task> tasks = [];
+  final File file = File("tasks.txt");
 
   void addTask(String description){
     var des = Task(description);
-    tasks.add(des);
+    addToFile(des.description);
   }
+
   String show() {
     String result = "";
+    String msg = "Enter '+' to add a task\n";
     for (int i = 0; i < tasks.length; i++) {
       result += "${i + 1}. ${tasks[i].toString()}\n";
     }
-    return result;
+    return result + msg;
   }
 
-  void edit(int index, String description){
-    index = index - 1;
+  // "num" is the number that is visible before each task.
+  String showSingleTask(int num){
+    int index = num - 1;
+    if (index >= 0 && index < tasks.length){
+      return "$num. ${tasks[index].toString()} \n";
+    } else{
+      return "Invalid input";
+    }
+  }
+
+
+  void edit(int num, String description){
+    int index = num - 1;
     if (index >= 0 && index < tasks.length){
       tasks[index].description = description;
     }else {
@@ -32,15 +47,69 @@ class TaskManager{
       print("Invalid Input");
     }
   }
+
+  Future<void> createFileIfNotExists() async{
+    if (!await file.exists()) {
+      await file.create(recursive: true);
+      print('File created: ${file.path}');
+    }
+  }
+
+  Future<void> addToFile(String data) async{
+    await createFileIfNotExists();
+    await file.writeAsString("$data\n", mode: FileMode.append);
+    print("Task added successfully");
+  }
+
+  Future<void> loadFromFile() async{
+    await createFileIfNotExists();
+    var contents = await file.readAsString();
+    if (contents.trim().isNotEmpty){
+      tasks = contents.split('\n')
+          .where((line) => line.trim().isNotEmpty)
+          .map((line) => Task(line))
+          .toList();
+      print(show());
+    } else{
+      print("No tasks available");
+    }
+  }
+
+  Future<void> singleLoadFromFile(int num) async{
+    await createFileIfNotExists();
+    var contents = await file.readAsString();
+    if (contents.trim().isNotEmpty){
+      tasks = contents.split('\n')
+          .where((line) => line.trim().isNotEmpty)
+          .map((line) => Task(line))
+          .toList();
+      print(showSingleTask(num));
+    } else{
+      print("No tasks available");
+    }
+  }
+
+  Future<void> removeTask(int num) async{
+    await createFileIfNotExists();
+    var contents = await file.readAsString();
+    if (contents.trim().isNotEmpty){
+      tasks = contents.split('\n')
+          .where((line) => line.trim().isNotEmpty)
+          .map((line) => Task(line))
+          .toList();
+      delete(num);
+      await file.writeAsString("");
+      for (final task in tasks){
+        await file.writeAsString("$task\n", mode: FileMode.append);
+      }
+
+    } else{
+      print("No tasks available");
+    }
+  }
 }
 
 void main(){
   var manager = TaskManager();
-  manager.addTask("Go shopping");
-  manager.addTask("description");
-  print(manager.show());
-  manager.edit(2, "Go do something");
-  print(manager.show());
-  manager.delete(1);
-  print(manager.show());
+  manager.loadFromFile();
 }

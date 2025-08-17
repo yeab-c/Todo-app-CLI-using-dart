@@ -6,9 +6,9 @@ class Task {
 
   String toString(){
     if (isDone){
-      return "[x] $description";
+      return description;
     } else{
-      return "[ ] $description";
+      return description;
     }
   }
 }
