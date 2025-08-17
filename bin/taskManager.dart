@@ -10,6 +10,20 @@ class TaskManager{
     addToFile(des.description);
   }
 
+  Future<int> numOfTasks() async{
+    await createFileIfNotExists();
+    var contents = await file.readAsString();
+    if (contents.trim().isNotEmpty){
+      tasks = contents.split('\n')
+          .where((line) => line.trim().isNotEmpty)
+          .map((line) => Task(line))
+          .toList();
+      return tasks.length;
+    } else{
+      return 0;
+    }
+  }
+
   String show() {
     String result = "";
     String msg = "Enter '+' to add a task\n";
@@ -69,7 +83,7 @@ class TaskManager{
           .where((line) => line.trim().isNotEmpty)
           .map((line) => Task(line))
           .toList();
-      print(show());
+
     } else{
       print("No tasks available");
     }
@@ -89,21 +103,27 @@ class TaskManager{
     }
   }
 
-  Future<void> removeTask(int num) async{
+  Future<void> removeTask(int num) async {
     await createFileIfNotExists();
     var contents = await file.readAsString();
-    if (contents.trim().isNotEmpty){
-      tasks = contents.split('\n')
+
+    if (contents.trim().isNotEmpty) {
+      tasks = contents
+          .split('\n')
           .where((line) => line.trim().isNotEmpty)
           .map((line) => Task(line))
           .toList();
-      delete(num);
-      await file.writeAsString("");
-      for (final task in tasks){
-        await file.writeAsString("$task\n", mode: FileMode.append);
-      }
 
-    } else{
+      int index = num - 1;
+      if (index >= 0 && index < tasks.length) {
+        tasks.removeAt(index);
+      } else {
+        print("Invalid task number");
+        return;
+      }
+      await file.writeAsString(tasks.map((t) => t.description).join('\n'));
+      print("Task removed successfully");
+    } else {
       print("No tasks available");
     }
   }
@@ -125,9 +145,4 @@ class TaskManager{
       print("No tasks available");
     }
   }
-}
-
-void main(){
-  var manager = TaskManager();
-  manager.addToFile("Do Something Again");
 }
